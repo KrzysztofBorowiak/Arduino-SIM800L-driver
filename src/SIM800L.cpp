@@ -38,7 +38,8 @@ const char AT_CMD_BASE[] PROGMEM = "AT";                                      //
 const char AT_CMD_CSQ[] PROGMEM = "AT+CSQ";                                   // Check the signal strengh
 const char AT_CMD_ATI[] PROGMEM = "ATI";                                      // Output version of the module
 const char AT_CMD_GMR[] PROGMEM = "AT+GMR";                                   // Output version of the firmware
-const char AT_CMD_SIM_CARD[] PROGMEM = "AT+CCID";						      // Get Sim Card version
+const char AT_CMD_SIM_CARD[] PROGMEM = "AT+CCID";						                  // Get Sim Card version
+const char AT_CMD_IMEI[] PROGMEM = "AT+GSN";									                // Get IMEI number
 
 const char AT_CMD_CFUN_TEST[] PROGMEM = "AT+CFUN?";                           // Check the current power mode
 const char AT_CMD_CFUN0[] PROGMEM = "AT+CFUN=0";                              // Switch minimum power mode
@@ -580,6 +581,26 @@ char* SIM800L::getSimCardNumber() {
   sendCommand_P(AT_CMD_SIM_CARD);
   if(readResponse(DEFAULT_TIMEOUT)) {
     int16_t idx = strIndex(internalBuffer, "AT+CCID") + 10;
+    int16_t idxEnd = strIndex(internalBuffer, "\r", idx+1);
+
+    // Store it on the recv buffer (not used at the moment)
+    initRecvBuffer();
+    for(uint16_t i = 0; i < idxEnd - idx; i++) {
+      recvBuffer[i] = internalBuffer[idx + i];
+    }
+    return getDataReceived();
+  } else {
+    return NULL;
+  }
+}
+
+/**
+ * Status function: Requests the simcard number
+ */
+char* SIM800L::getIMEI() {
+  sendCommand_P(AT_CMD_IMEI);
+  if(readResponse(DEFAULT_TIMEOUT)) {
+    int16_t idx = strIndex(internalBuffer, "AT+GSN") + 9;
     int16_t idxEnd = strIndex(internalBuffer, "\r", idx+1);
 
     // Store it on the recv buffer (not used at the moment)
